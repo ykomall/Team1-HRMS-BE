@@ -6,7 +6,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import authenticate
 from rest_framework.views import APIView,Response
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from passlib.hash import pbkdf2_sha256
+from rest_framework_simplejwt.tokens import RefreshToken
 
 # Create your views here.
 class UserLoginView(APIView):
@@ -24,13 +26,18 @@ class UserLoginView(APIView):
             )
         # Authenticate user
         user=User.objects.filter(email=email).first()
-        dnc_pass = pbkdf2_sha256.verify(password, user.password)
+        
 
 
         if user.email==email and pbkdf2_sha256.verify(password, user.password):
             # Successful authentication
+
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
             response={
                 "message":"Successfully authenticated",
+                
+                "access_token": access_token,
             }
             return Response(response, status.HTTP_200_OK)
         else:
