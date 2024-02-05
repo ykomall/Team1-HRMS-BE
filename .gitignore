@@ -113,5 +113,5 @@ GitHub.sublime-settings
 !.vscode/extensions.json
 .history
 # Extra field
-*/migrations/
+/migrations/
 __pycache__/
