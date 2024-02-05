@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import authenticate
 from rest_framework.views import APIView,Response
+from passlib.hash import pbkdf2_sha256
 
 # Create your views here.
 class UserLoginView(APIView):
@@ -23,8 +24,10 @@ class UserLoginView(APIView):
             )
         # Authenticate user
         user=User.objects.filter(email=email).first()
+        dnc_pass = pbkdf2_sha256.verify(password, user.password)
 
-        if user.email==email and user.password==password:
+
+        if user.email==email and pbkdf2_sha256.verify(password, user.password):
             # Successful authentication
             response={
                 "message":"Successfully authenticated",
@@ -59,12 +62,16 @@ class UserSignupView(APIView):
                 response,
                 status.HTTP_400_BAD_REQUEST
             )
+        
+        enc_pass = pbkdf2_sha256.encrypt(password, rounds = 12000, salt_size = 32)
+
         user_instance = User.objects.create(
             email=email,
-            password=password,
+            password=enc_pass,
             fullname=fullname,
             phone=phone
         )
+
 
         # Serialize the created user instance
         serializer = User_serializers(user_instance)
