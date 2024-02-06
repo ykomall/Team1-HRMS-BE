@@ -44,7 +44,7 @@ class UserLoginView(APIView):
         
 class Leave(APIView):
     def post(self, request):
-        print("komal")
+        # print("komal")
         leaveDesc = request.data.get('leaveDesc')
         fromDate = request.data.get('fromDate')
         toDate = request.data.get('toDate')
@@ -136,3 +136,34 @@ class ManagerGet(APIView):
             'users': user_data
         }
         return Response(response_data, status=status.HTTP_200_OK)
+    
+
+
+
+class GrantLeave(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        leaveId = request.data.get('leaveId')
+        # leave  = ApplyLeave.objects.get
+        grant = request.data.get('grant')
+
+        if not email :
+            response={
+                "message": "Email is required."
+            }
+            return Response(response,status.HTTP_400_BAD_REQUEST)
+
+        if not Manager.objects.filter(email=email).exists():
+            return Response(data={'error': 'Manager with this email does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        
+        if not ApplyLeave.objects.filter(id=leaveId).exists():
+            return Response(data={'error': 'Invalid leave id'}, status=status.HTTP_404_NOT_FOUND)
+
+        if(grant == "True"):
+            apply_leave_instance = ApplyLeave.objects.get(id=leaveId)
+            apply_leave_instance.verified = True  # Set verified to the new value
+            apply_leave_instance.save() 
+            return Response("Leave Granted", status=status.HTTP_200_OK)
+
+        else:
+            return Response("Leave Rejected", status=status.HTTP_200_OK)
