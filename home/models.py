@@ -11,7 +11,14 @@ class User(models.Model):
     def __str__(self) :
         return self.email
     
-    # def verify_password(self, raw_password):
-    #     return pbkdf2_sha256.verify(raw_password, self.password)
     
 
+class ApplyLeave(models.Model):
+    leaveDesc = models.CharField(max_length = 250,default='')
+    fromDate = models.DateTimeField()
+    toDate = models.DateTimeField()
+    selectManager = models.CharField(max_length = 30,default='')
+    user = models.CharField(max_length = 30,default='')
+    verified = models.BooleanField(default=False)
+    
+    
