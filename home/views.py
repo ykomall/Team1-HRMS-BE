@@ -3,7 +3,7 @@ from django.shortcuts import render
 import jwt
 from rest_framework import viewsets
 from .serializers import User_serializers
-from .models import ApplyLeave, User
+from .models import ApplyLeave, User, Manager
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import authenticate
@@ -101,3 +101,38 @@ class UserSignupView(APIView):
         serializer = User_serializers(user_instance)
         response = {"message": "User created successfully", "data": serializer.data}
         return Response(response, status=status.HTTP_201_CREATED)
+    
+
+
+
+
+class ManagerGet(APIView):
+    def get(self, request):
+        email = request.data.get('email')
+        if not email :
+            response={
+                "message": "Email is required."
+            }
+            return Response(response,status.HTTP_400_BAD_REQUEST)
+
+        if not Manager.objects.filter(email=email).exists():
+            return Response(data={'error': 'Manager with this email does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+        print(email)
+
+        users = User.objects.filter(manager=email)
+        
+        user_data = []
+        for user in users:
+            user_dict = {
+                'email': user.email,
+                'fullname': user.fullname,
+                'phone': user.phone
+            }
+            user_data.append(user_dict)
+
+        response_data = {
+
+            'users': user_data
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
