@@ -25,7 +25,14 @@ SECRET_KEY = 'django-insecure-nhg&r3cwdsytm1rah&&y7k4)a87e@v_u2e*kprr(lb@c8@ba=o
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:4200',
+] # If this is used, then not need to use `CORS_ALLOW_ALL_ORIGINS = True`
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    'http://localhost:4200',
+]
+CORS_ORIGIN_ALLOW_ALL = True
 ALLOWED_HOSTS = []
 
 
@@ -42,6 +49,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'home',
     'rest_framework_simplejwt',
+    'corsheaders',
 ]
 
 REST_FRAMEWORK = {
@@ -65,6 +73,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = 'hrms.urls'
@@ -96,7 +106,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'hrms',
         'USER':'postgres',
-        'PASSWORD':'root',
+        'PASSWORD':'Indore@2008',
         'HOST' : 'localhost',
         'PORT' : '5432'
     }

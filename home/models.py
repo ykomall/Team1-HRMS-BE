@@ -8,6 +8,15 @@ class User(models.Model):
     fullname = models.CharField(max_length = 50,default='')
     password = models.CharField(max_length = 256,default='')
     phone = models.CharField(max_length = 10,default='')
+    manager = models.CharField(max_length = 30,default='')
+    def __str__(self) :
+        return self.email
+    
+class Manager(models.Model):
+    email = models.CharField(max_length = 50,default='')
+    fullname = models.CharField(max_length = 50,default='')
+    password = models.CharField(max_length = 256,default='')
+    phone = models.CharField(max_length = 10,default='')
     def __str__(self) :
         return self.email
     
