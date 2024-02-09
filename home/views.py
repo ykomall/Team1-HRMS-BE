@@ -55,7 +55,7 @@ class UserLoginView(APIView):
         
 class Leave(APIView):
     def post(self, request):
-        response={}
+        
         leaveDesc = request.data.get('leaveDesc')
         fromDate = request.data.get('fromDate')
         toDate = request.data.get('toDate')
@@ -63,19 +63,55 @@ class Leave(APIView):
         headers = request.headers
 
         authorization_token = headers.get('Authorization')
+        if not authorization_token:
+            response={
+            'success': False
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         # # Get Authorization token from headers
         decoded_payload = jwt.decode(authorization_token, os.environ.get("SECRET_KEY"), algorithms=['HS256'])
 
         if not decoded_payload:
-            return Response(data={'error': 'Authorization header missing'}, status=status.HTTP_401_UNAUTHORIZED)
+            response={
+                'error': 'Authorization header missing'
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         emailget = decoded_payload.get('email')
         if not emailget:
-            return Response(data={'error': 'Email missing in the token payload'}, status=status.HTTP_401_UNAUTHORIZED)
+            response={
+                'error': 'Email missing in the token payload'
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         # # Check if email exists in user database
         if not User.objects.filter(email=emailget).exists():
-            return Response(data={'error': 'User with this email does not exist'}, status=status.HTTP_404_NOT_FOUND)
+            response={
+                'error': 'User with this email does not exist'
+            }
+            
+            return Response(response, status=status.HTTP_404_NOT_FOUND)
         fromdate=fromDate[0:10]
         todate=toDate[0:10]
+
+        from_date_str = fromDate[0:10]
+        to_date_str = toDate[0:10]
+
+        from_date = datetime.strptime(from_date_str, "%Y-%m-%d").date()
+        to_date = datetime.strptime(to_date_str, "%Y-%m-%d").date()
+
+        days = (to_date - from_date).days
+
+        
+        user = User.objects.get(email=emailget)
+
+
+        leave_balance = user.leave_balance
+
+        if days < 0 or days > leave_balance:
+            response={
+                'error': 'leave not available'
+            }
+            return Response(response, status=status.HTTP_404_NOT_FOUND)
+        
         user_instance = ApplyLeave.objects.create(
             leaveDesc=leaveDesc,
             fromDate=fromdate,
@@ -84,7 +120,10 @@ class Leave(APIView):
             user=emailget
         )
         user_instance.save()
-        return Response({"message": "Leave application created successfully"}, status=status.HTTP_201_CREATED)
+        response={
+                "message": "Leave application created successfully"
+            }
+        return Response(response, status=status.HTTP_201_CREATED)
 
 class UserSignupView(APIView):
     def post(self, request):
@@ -122,15 +161,29 @@ class ManagerGet(APIView):
         headers = request.headers
 
         authorization_token = headers.get('Authorization')
+        if not authorization_token:
+            response={
+            'success': False
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         decoded_payload = jwt.decode(authorization_token, os.environ.get("SECRET_KEY"), algorithms=['HS256'])
 
         if not decoded_payload:
-            return Response(data={'error': 'Authorization header missing'}, status=status.HTTP_401_UNAUTHORIZED)
+            response={
+                'error': 'Authorization header missing'
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         email = decoded_payload.get('email')
         if not email:
-            return Response(data={'error': 'Email missing in the token payload'}, status=status.HTTP_401_UNAUTHORIZED)
+            response={
+                'error': 'Email missing in the token payload'
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         if not Manager.objects.filter(email=email).exists():
-            return Response(data={'error': 'Manager with this email does not exist'}, status=status.HTTP_404_NOT_FOUND)
+            response={
+                'error': 'Manager with this email does not exist'
+            }
+            return Response(response, status=status.HTTP_404_NOT_FOUND)
         manager_name=Manager.objects.filter(email=email).first().name
         users = User.objects.filter(manager=manager_name)
         user_data = []
@@ -152,15 +205,29 @@ class GrantLeave(APIView):
         headers = request.headers
 
         authorization_token = headers.get('Authorization')
+        if not authorization_token:
+            response={
+            'success': False
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         decoded_payload = jwt.decode(authorization_token, os.environ.get("SECRET_KEY"), algorithms=['HS256'])
 
         if not decoded_payload:
-            return Response(data={'error': 'Authorization header missing'}, status=status.HTTP_401_UNAUTHORIZED)
+            response={
+                'error': 'Authorization header missing'
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         email = decoded_payload.get('email')
         if not email:
-            return Response(data={'error': 'Email missing in the token payload'}, status=status.HTTP_401_UNAUTHORIZED)
+            response={
+                'error': 'Email missing in the token payload'
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         if not Manager.objects.filter(email=email).exists():
-            return Response(data={'error': 'Manager with this email does not exist'}, status=status.HTTP_404_NOT_FOUND)
+            response={
+                'error': 'Manager with this email does not exist'
+            }
+            return Response(response, status=status.HTTP_404_NOT_FOUND)
         print(email)
         manager_name=Manager.objects.filter(email=email).first().name
         leaves=ApplyLeave.objects.filter(selectManager=manager_name)
@@ -185,29 +252,80 @@ class GrantLeave(APIView):
     def put(self, request):
         leaveId = request.data.get('leaveId')
         grant = request.data.get('grant')
+
+        headers = request.headers
+
+        authorization_token = headers.get('Authorization')
+        if not authorization_token:
+            response={
+            'success': False
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
+        decoded_payload = jwt.decode(authorization_token, os.environ.get("SECRET_KEY"), algorithms=['HS256'])
+
+        if not decoded_payload:
+            response = {
+            'error': 'Authorization header missing'
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
+        email = decoded_payload.get('email')
+        if not email:
+            response = {
+            'error': 'Email missing in the token payload'
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
+        if not User.objects.filter(email=email).exists():
+            response = {
+            'error': 'Manager with this email does not exist'
+            }
+            return Response(response, status=status.HTTP_404_NOT_FOUND)
+
         if not ApplyLeave.objects.filter(id=leaveId).exists():
-            return Response(data={'error': 'Invalid leave id'}, status=status.HTTP_404_NOT_FOUND)
+            response = {
+            'error': 'Invalid leave id'
+            }
+            return Response(response, status=status.HTTP_404_NOT_FOUND)
         if(grant == True):
             apply_leave_instance = ApplyLeave.objects.get(id=leaveId)
             start = apply_leave_instance.fromDate
             end = apply_leave_instance.toDate
 
-            start = datetime.strptime(start, '%Y-%m-%d')
-            end = datetime.strptime(end, '%Y-%m-%d')
-            days = end-start
-            user=User.objects.filter(email=apply_leave_instance.user).first()
-            leave=int(user.leave_balance)-days.days
 
-            user.leave_balance=leave
+            from_date = datetime.strptime(start, "%Y-%m-%d").date()
+            to_date = datetime.strptime(end, "%Y-%m-%d").date()
+
+            days = (to_date - from_date).days
+            emp = ApplyLeave.objects.get(id=leaveId)
+            
+            user = User.objects.get(email=emp.user)
+
+
+            leave_balance = user.leave_balance
+
+            if days < 0 or days > leave_balance:
+                response = {
+            'error': 'leave not available'
+            }
+                return Response(response, status=status.HTTP_404_NOT_FOUND)
+    
+
+            print(user ,user.leave_balance , "user ")
+            user.leave_balance= user.leave_balance - days
             user.save()
             apply_leave_instance.verified = "Approved"
             apply_leave_instance.save() 
-            return Response("Leave Granted", status=status.HTTP_200_OK)
+            response = {
+            "Leave Granted"
+            }
+            return Response(response, status=status.HTTP_200_OK)
         else:
             apply_leave_instance = ApplyLeave.objects.get(id=leaveId)
             apply_leave_instance.verified = "Rejected"
             apply_leave_instance.save() 
-            return Response("Leave Rejected", status=status.HTTP_200_OK)
+            response = {
+            "Leave Rejected"
+            }
+            return Response(response, status=status.HTTP_200_OK)
         
 class NewUser(APIView):
     def get(self,request):
@@ -215,15 +333,29 @@ class NewUser(APIView):
         headers = request.headers
 
         authorization_token = headers.get('Authorization')
+        if not authorization_token:
+            response={
+            'success': False
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         decoded_payload = jwt.decode(authorization_token, os.environ.get("SECRET_KEY"), algorithms=['HS256'])
 
         if not decoded_payload:
-            return Response(data={'error': 'Authorization header missing'}, status=status.HTTP_401_UNAUTHORIZED)
+            response = {
+            'error': 'Authorization header missing'
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         email = decoded_payload.get('email')
         if not email:
-            return Response(data={'error': 'Email missing in the token payload'}, status=status.HTTP_401_UNAUTHORIZED)
+            response = {
+            'error': 'Email missing in the token payload'
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         if not Manager.objects.filter(email=email).exists():
-            return Response(data={'error': 'Manager with this email does not exist'}, status=status.HTTP_404_NOT_FOUND)
+            response = {
+            'error': 'Manager with this email does not exist'
+            }
+            return Response(response, status=status.HTTP_404_NOT_FOUND)
         manager_name=Manager.objects.filter(email=email).first().name
         users=Moderator.objects.filter(manager=manager_name) 
         user_data = []
@@ -290,12 +422,23 @@ class LeaveBalance(APIView):
         response={}
         headers = request.headers
         authorization_token = headers.get('Authorization')
+        if not authorization_token:
+            response={
+            'success': False
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         decoded_payload = jwt.decode(authorization_token, os.environ.get("SECRET_KEY"), algorithms=['HS256'])
         if not decoded_payload:
-            return Response(data={'error': 'Authorization header missing'}, status=status.HTTP_401_UNAUTHORIZED)
+            response = {
+            'error': 'Authorization header missing'
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         email = decoded_payload.get('email')
         if not email:
-            return Response(data={'error': 'Email missing in the token payload'}, status=status.HTTP_401_UNAUTHORIZED)
+            response = {
+            'error': 'Email missing in the token payload'
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         user=User.objects.filter(email=email).first()
         response={
             "leave_balance":user.leave_balance
@@ -307,10 +450,19 @@ class ProfileCard(APIView):
         response={}
         headers = request.headers
         authorization_token = headers.get('Authorization')
-        print(headers)
+
+        if not authorization_token:
+            response={
+            'success': False
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
+        
         decoded_payload = jwt.decode(authorization_token, os.environ.get("SECRET_KEY"), algorithms=['HS256'])
         if not decoded_payload:
-            return Response(data={'error': 'Authorization header missing'}, status=status.HTTP_401_UNAUTHORIZED)
+            response={
+            'error': 'Authorization header missing'
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         email = decoded_payload.get('email')
         user=User.objects.filter(email=email).first()
         serializer = User_serializers(user)
@@ -322,6 +474,28 @@ class ProfileCard(APIView):
 class GetManager(APIView):
     def get(self,request):
         response={}
+        headers = request.headers
+
+        authorization_token = headers.get('Authorization')
+        decoded_payload = jwt.decode(authorization_token, os.environ.get("SECRET_KEY"), algorithms=['HS256'])
+
+        if not decoded_payload:
+            response={
+            'error': 'Authorization header missing'
+        }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
+        email = decoded_payload.get('email')
+        if not email:
+            response={
+            'error': 'Email missing in the token payload'
+        }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
+        if not User.objects.filter(email=email).exists():
+            response={
+            'error': 'Manager with this email does not exist'
+        }
+            return Response(response, status=status.HTTP_404_NOT_FOUND)
+
         manager=Manager.objects.all()
         manager_data = []
         for manager in manager:
