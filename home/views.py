@@ -419,7 +419,6 @@ class DeclineUser(APIView):
 
 class LeaveBalance(APIView):
     def get(self,request):
-        response={}
         headers = request.headers
         authorization_token = headers.get('Authorization')
         if not authorization_token:
@@ -440,8 +439,21 @@ class LeaveBalance(APIView):
             }
             return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         user=User.objects.filter(email=email).first()
+        my_leaves = ApplyLeave.objects.filter(user=email)
+        print (my_leaves , "email")
+        leave_variable = 0
+        for row in my_leaves:
+            
+            from_date = datetime.strptime(row.fromDate.split(' ')[0], "%Y-%m-%d").date()
+            to_date = datetime.strptime(row.toDate.split(' ')[0], "%Y-%m-%d").date()
+
+            days = (to_date - from_date).days
+            leave_variable += days
+            leave_variable = leave_variable + days
+
         response={
-            "leave_balance":user.leave_balance
+            "leave_balance":user.leave_balance,
+            "applied" : leave_variable
         }
         return Response(response,status=status.HTTP_201_CREATED)
     
