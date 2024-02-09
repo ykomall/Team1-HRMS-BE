@@ -1,5 +1,8 @@
 from django.test import TestCase
 from .models import User, Moderator, Manager, ApplyLeave
+from rest_framework.test import APIClient
+from rest_framework import status
+
 
 class UserModelTestCase(TestCase):
     def setUp(self):
@@ -19,7 +22,6 @@ class UserModelTestCase(TestCase):
     def test_user_creation(self):
         self.assertEqual(self.user.email, 'test@example.com')
         self.assertEqual(self.user.name, 'Test User')
-        # Add more assertions for other fields as needed
 
 class ModeratorModelTestCase(TestCase):
     def setUp(self):
@@ -37,7 +39,7 @@ class ModeratorModelTestCase(TestCase):
     def test_moderator_creation(self):
         self.assertEqual(self.moderator.email, 'moderator@example.com')
         self.assertEqual(self.moderator.name, 'Test Moderator')
-        # Add more assertions for other fields as needed
+
 
 class ManagerModelTestCase(TestCase):
     def setUp(self):
@@ -64,4 +66,6 @@ class ApplyLeaveModelTestCase(TestCase):
     def test_apply_leave_creation(self):
         self.assertEqual(self.apply_leave.leaveDesc, 'Test Leave Description')
         self.assertEqual(self.apply_leave.fromDate, '2024-01-01')
-        # Add more assertions for other fields as needed
+
+
+

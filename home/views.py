@@ -27,7 +27,7 @@ class UserLoginView(APIView):
             response={
             "message":"No user found"
             }
-            return Response(response,status.HTTP_200_OK)
+            return Response(response,status.HTTP_404_NOT_FOUND)
         if user.email==email and pbkdf2_sha256.verify(password, user.password):
             refresh = RefreshToken.for_user(user)
 
@@ -51,7 +51,7 @@ class UserLoginView(APIView):
                 "success":False,
                 "message": "Invalid credentials."
             }
-        return Response(response,status.HTTP_200_OK)
+        return Response(response,status.HTTP_404_NOT_FOUND)
         
 class Leave(APIView):
     def post(self, request):
