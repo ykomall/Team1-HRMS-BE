@@ -1,6 +1,7 @@
 import token
 from django.shortcuts import render
 import jwt
+import os
 from rest_framework import viewsets
 from .serializers import User_serializers
 from .models import ApplyLeave, Moderator, User, Manager
@@ -29,15 +30,17 @@ class UserLoginView(APIView):
             return Response(response,status.HTTP_200_OK)
         if user.email==email and pbkdf2_sha256.verify(password, user.password):
             refresh = RefreshToken.for_user(user)
-            access_token = jwt.encode( { 'email' : user.email }, "94CEDBC4AC5F94D4496E44691487A", algorithm='HS256')
+
+            access_token = jwt.encode( { 'email' : user.email }, os.environ.get("SECRET_KEY"), algorithm='HS256')
             serializer = User_serializers(user)
             manager=False
             if user.role=="manager":
                 manager=True
+
             response={
                 "message": "Successfully authenticated",
                 "email": email,
-                "user":serializer.data,
+
                 "access_token":access_token,
                 "success":True,
                 "manager":manager
@@ -58,9 +61,11 @@ class Leave(APIView):
         toDate = request.data.get('toDate')
         selectManager = request.data.get('selectManager')
         headers = request.headers
+
         authorization_token = headers.get('Authorization')
         # # Get Authorization token from headers
-        decoded_payload = jwt.decode(authorization_token, "94CEDBC4AC5F94D4496E44691487A", algorithms=['HS256'])
+        decoded_payload = jwt.decode(authorization_token, os.environ.get("SECRET_KEY"), algorithms=['HS256'])
+
         if not decoded_payload:
             return Response(data={'error': 'Authorization header missing'}, status=status.HTTP_401_UNAUTHORIZED)
         emailget = decoded_payload.get('email')
@@ -115,8 +120,10 @@ class UserSignupView(APIView):
 class ManagerGet(APIView):
     def get(self, request):
         headers = request.headers
+
         authorization_token = headers.get('Authorization')
-        decoded_payload = jwt.decode(authorization_token, "94CEDBC4AC5F94D4496E44691487A", algorithms=['HS256'])
+        decoded_payload = jwt.decode(authorization_token, os.environ.get("SECRET_KEY"), algorithms=['HS256'])
+
         if not decoded_payload:
             return Response(data={'error': 'Authorization header missing'}, status=status.HTTP_401_UNAUTHORIZED)
         email = decoded_payload.get('email')
@@ -143,8 +150,10 @@ class ManagerGet(APIView):
 class GrantLeave(APIView):
     def get(self,request):
         headers = request.headers
+
         authorization_token = headers.get('Authorization')
-        decoded_payload = jwt.decode(authorization_token, "94CEDBC4AC5F94D4496E44691487A", algorithms=['HS256'])
+        decoded_payload = jwt.decode(authorization_token, os.environ.get("SECRET_KEY"), algorithms=['HS256'])
+
         if not decoded_payload:
             return Response(data={'error': 'Authorization header missing'}, status=status.HTTP_401_UNAUTHORIZED)
         email = decoded_payload.get('email')
@@ -182,11 +191,13 @@ class GrantLeave(APIView):
             apply_leave_instance = ApplyLeave.objects.get(id=leaveId)
             start = apply_leave_instance.fromDate
             end = apply_leave_instance.toDate
+
             start = datetime.strptime(start, '%Y-%m-%d')
             end = datetime.strptime(end, '%Y-%m-%d')
             days = end-start
             user=User.objects.filter(email=apply_leave_instance.user).first()
             leave=int(user.leave_balance)-days.days
+
             user.leave_balance=leave
             user.save()
             apply_leave_instance.verified = "Approved"
@@ -202,8 +213,10 @@ class NewUser(APIView):
     def get(self,request):
         response={}
         headers = request.headers
+
         authorization_token = headers.get('Authorization')
-        decoded_payload = jwt.decode(authorization_token, "94CEDBC4AC5F94D4496E44691487A", algorithms=['HS256'])
+        decoded_payload = jwt.decode(authorization_token, os.environ.get("SECRET_KEY"), algorithms=['HS256'])
+
         if not decoded_payload:
             return Response(data={'error': 'Authorization header missing'}, status=status.HTTP_401_UNAUTHORIZED)
         email = decoded_payload.get('email')
@@ -225,7 +238,7 @@ class NewUser(APIView):
             response = {
                 'message':'Data send',
             'users': user_data
-        }
+            }
         return Response(response, status=status.HTTP_200_OK)
 
     def post(self, request):
@@ -277,7 +290,7 @@ class LeaveBalance(APIView):
         response={}
         headers = request.headers
         authorization_token = headers.get('Authorization')
-        decoded_payload = jwt.decode(authorization_token, "94CEDBC4AC5F94D4496E44691487A", algorithms=['HS256'])
+        decoded_payload = jwt.decode(authorization_token, os.environ.get("SECRET_KEY"), algorithms=['HS256'])
         if not decoded_payload:
             return Response(data={'error': 'Authorization header missing'}, status=status.HTTP_401_UNAUTHORIZED)
         email = decoded_payload.get('email')
@@ -295,7 +308,7 @@ class ProfileCard(APIView):
         headers = request.headers
         authorization_token = headers.get('Authorization')
         print(headers)
-        decoded_payload = jwt.decode(authorization_token, "94CEDBC4AC5F94D4496E44691487A", algorithms=['HS256'])
+        decoded_payload = jwt.decode(authorization_token, os.environ.get("SECRET_KEY"), algorithms=['HS256'])
         if not decoded_payload:
             return Response(data={'error': 'Authorization header missing'}, status=status.HTTP_401_UNAUTHORIZED)
         email = decoded_payload.get('email')
