@@ -17,7 +17,6 @@ from datetime import datetime
 # Create your views here.
 class UserLoginView(APIView):
     def post(self, request):
-        # response={"message":"hahahah"}
         email = request.data.get('email')
         password = request.data.get('password')
         role = request.data.get('role')
@@ -27,14 +26,14 @@ class UserLoginView(APIView):
             response={
             "message":"No user found"
             }
-            return Response(response,status.HTTP_200_OK)
+            return Response(response,status.HTTP_404_NOT_FOUND)
         if user.email==email and pbkdf2_sha256.verify(password, user.password):
             refresh = RefreshToken.for_user(user)
 
             access_token = jwt.encode( { 'email' : user.email }, os.environ.get("SECRET_KEY"), algorithm='HS256')
             serializer = User_serializers(user)
             manager=False
-            if user.role=="manager":
+            if user.role=="Manager":
                 manager=True
 
             response={
@@ -51,40 +50,66 @@ class UserLoginView(APIView):
                 "success":False,
                 "message": "Invalid credentials."
             }
-        return Response(response,status.HTTP_200_OK)
+        return Response(response,status.HTTP_404_NOT_FOUND)
         
 class Leave(APIView):
     def post(self, request):
-        response={}
         leaveDesc = request.data.get('leaveDesc')
         fromDate = request.data.get('fromDate')
         toDate = request.data.get('toDate')
         selectManager = request.data.get('selectManager')
         headers = request.headers
-
         authorization_token = headers.get('Authorization')
+        if not authorization_token:
+            response={
+            'success': False
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         # # Get Authorization token from headers
         decoded_payload = jwt.decode(authorization_token, os.environ.get("SECRET_KEY"), algorithms=['HS256'])
-
         if not decoded_payload:
-            return Response(data={'error': 'Authorization header missing'}, status=status.HTTP_401_UNAUTHORIZED)
+            response={
+                'error': 'Authorization header missing'
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         emailget = decoded_payload.get('email')
         if not emailget:
-            return Response(data={'error': 'Email missing in the token payload'}, status=status.HTTP_401_UNAUTHORIZED)
+            response={
+                'error': 'Email missing in the token payload'
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         # # Check if email exists in user database
         if not User.objects.filter(email=emailget).exists():
-            return Response(data={'error': 'User with this email does not exist'}, status=status.HTTP_404_NOT_FOUND)
+            response={
+                'error': 'User with this email does not exist'
+            }
+            return Response(response, status=status.HTTP_404_NOT_FOUND)
         fromdate=fromDate[0:10]
         todate=toDate[0:10]
+        from_date_str = fromDate[0:10]
+        to_date_str = toDate[0:10]
+        from_date = datetime.strptime(from_date_str, "%Y-%m-%d").date()
+        to_date = datetime.strptime(to_date_str, "%Y-%m-%d").date()
+        days = (to_date - from_date).days
+        user = User.objects.get(email=emailget)
+        leave_balance = user.leave_balance
+        if days < 0 or days > leave_balance:
+            response={
+                'error': 'leave not available'
+            }
+            return Response(response, status=status.HTTP_404_NOT_FOUND)
         user_instance = ApplyLeave.objects.create(
             leaveDesc=leaveDesc,
             fromDate=fromdate,
             toDate=todate,
             selectManager=selectManager,
-            user=emailget
+            user_id=emailget
         )
         user_instance.save()
-        return Response({"message": "Leave application created successfully"}, status=status.HTTP_201_CREATED)
+        response={
+                "message": "Leave application created successfully"
+            }
+        return Response(response, status=status.HTTP_201_CREATED)
 
 class UserSignupView(APIView):
     def post(self, request):
@@ -122,15 +147,29 @@ class ManagerGet(APIView):
         headers = request.headers
 
         authorization_token = headers.get('Authorization')
+        if not authorization_token:
+            response={
+            'success': False
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         decoded_payload = jwt.decode(authorization_token, os.environ.get("SECRET_KEY"), algorithms=['HS256'])
 
         if not decoded_payload:
-            return Response(data={'error': 'Authorization header missing'}, status=status.HTTP_401_UNAUTHORIZED)
+            response={
+                'error': 'Authorization header missing'
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         email = decoded_payload.get('email')
         if not email:
-            return Response(data={'error': 'Email missing in the token payload'}, status=status.HTTP_401_UNAUTHORIZED)
+            response={
+                'error': 'Email missing in the token payload'
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         if not Manager.objects.filter(email=email).exists():
-            return Response(data={'error': 'Manager with this email does not exist'}, status=status.HTTP_404_NOT_FOUND)
+            response={
+                'error': 'Manager with this email does not exist'
+            }
+            return Response(response, status=status.HTTP_404_NOT_FOUND)
         manager_name=Manager.objects.filter(email=email).first().name
         users = User.objects.filter(manager=manager_name)
         user_data = []
@@ -150,24 +189,36 @@ class ManagerGet(APIView):
 class GrantLeave(APIView):
     def get(self,request):
         headers = request.headers
-
         authorization_token = headers.get('Authorization')
+        if not authorization_token:
+            response={
+            'success': False
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         decoded_payload = jwt.decode(authorization_token, os.environ.get("SECRET_KEY"), algorithms=['HS256'])
 
         if not decoded_payload:
-            return Response(data={'error': 'Authorization header missing'}, status=status.HTTP_401_UNAUTHORIZED)
+            response={
+                'error': 'Authorization header missing'
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         email = decoded_payload.get('email')
         if not email:
-            return Response(data={'error': 'Email missing in the token payload'}, status=status.HTTP_401_UNAUTHORIZED)
+            response={
+                'error': 'Email missing in the token payload'
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         if not Manager.objects.filter(email=email).exists():
-            return Response(data={'error': 'Manager with this email does not exist'}, status=status.HTTP_404_NOT_FOUND)
-        print(email)
+            response={
+                'error': 'Manager with this email does not exist'
+            }
+            return Response(response, status=status.HTTP_404_NOT_FOUND)
         manager_name=Manager.objects.filter(email=email).first().name
         leaves=ApplyLeave.objects.filter(selectManager=manager_name)
         leave_data = []
         for leave in leaves:
             if leave.verified=="Pending":
-                user=User.objects.filter(email=leave.user).first()
+                user=User.objects.filter(email=leave.user_id).first()
                 user_dict = {
                     'id':leave.id,
                     'leaveDesc': leave.leaveDesc,
@@ -191,39 +242,49 @@ class GrantLeave(APIView):
             apply_leave_instance = ApplyLeave.objects.get(id=leaveId)
             start = apply_leave_instance.fromDate
             end = apply_leave_instance.toDate
-
             start = datetime.strptime(start, '%Y-%m-%d')
             end = datetime.strptime(end, '%Y-%m-%d')
             days = end-start
-            user=User.objects.filter(email=apply_leave_instance.user).first()
+            user=User.objects.filter(email=apply_leave_instance.user_id).first()
             leave=int(user.leave_balance)-days.days
-
             user.leave_balance=leave
             user.save()
             apply_leave_instance.verified = "Approved"
-            apply_leave_instance.save() 
+            apply_leave_instance.save()
             return Response("Leave Granted", status=status.HTTP_200_OK)
         else:
             apply_leave_instance = ApplyLeave.objects.get(id=leaveId)
             apply_leave_instance.verified = "Rejected"
-            apply_leave_instance.save() 
+            apply_leave_instance.save()
             return Response("Leave Rejected", status=status.HTTP_200_OK)
-        
 class NewUser(APIView):
     def get(self,request):
         response={}
         headers = request.headers
-
         authorization_token = headers.get('Authorization')
+        if not authorization_token:
+            response={
+            'success': False
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         decoded_payload = jwt.decode(authorization_token, os.environ.get("SECRET_KEY"), algorithms=['HS256'])
 
         if not decoded_payload:
-            return Response(data={'error': 'Authorization header missing'}, status=status.HTTP_401_UNAUTHORIZED)
+            response = {
+            'error': 'Authorization header missing'
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         email = decoded_payload.get('email')
         if not email:
-            return Response(data={'error': 'Email missing in the token payload'}, status=status.HTTP_401_UNAUTHORIZED)
+            response = {
+            'error': 'Email missing in the token payload'
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         if not Manager.objects.filter(email=email).exists():
-            return Response(data={'error': 'Manager with this email does not exist'}, status=status.HTTP_404_NOT_FOUND)
+            response = {
+            'error': 'Manager with this email does not exist'
+            }
+            return Response(response, status=status.HTTP_404_NOT_FOUND)
         manager_name=Manager.objects.filter(email=email).first().name
         users=Moderator.objects.filter(manager=manager_name) 
         user_data = []
@@ -287,18 +348,40 @@ class DeclineUser(APIView):
 
 class LeaveBalance(APIView):
     def get(self,request):
-        response={}
         headers = request.headers
         authorization_token = headers.get('Authorization')
+        if not authorization_token:
+            response={
+            'success': False
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         decoded_payload = jwt.decode(authorization_token, os.environ.get("SECRET_KEY"), algorithms=['HS256'])
         if not decoded_payload:
-            return Response(data={'error': 'Authorization header missing'}, status=status.HTTP_401_UNAUTHORIZED)
+            response = {
+            'error': 'Authorization header missing'
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         email = decoded_payload.get('email')
         if not email:
-            return Response(data={'error': 'Email missing in the token payload'}, status=status.HTTP_401_UNAUTHORIZED)
+            response = {
+            'error': 'Email missing in the token payload'
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         user=User.objects.filter(email=email).first()
+        my_leaves = ApplyLeave.objects.filter(user_id=email)
+        on_Hold,applied = 0,0
+        for row in my_leaves:
+            from_date = datetime.strptime(row.fromDate.split(' ')[0], "%Y-%m-%d").date()
+            to_date = datetime.strptime(row.toDate.split(' ')[0], "%Y-%m-%d").date()
+            days = (to_date - from_date).days
+            if row.verified == "Pending":
+                on_Hold = on_Hold + days
+            if row.verified=="Approved":
+                applied=applied+days
         response={
-            "leave_balance":user.leave_balance
+            "leave_balance":user.leave_balance,
+            "onhold" : on_Hold,
+            "applied":applied
         }
         return Response(response,status=status.HTTP_201_CREATED)
     
@@ -307,10 +390,19 @@ class ProfileCard(APIView):
         response={}
         headers = request.headers
         authorization_token = headers.get('Authorization')
-        print(headers)
+
+        if not authorization_token:
+            response={
+            'success': False
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
+        
         decoded_payload = jwt.decode(authorization_token, os.environ.get("SECRET_KEY"), algorithms=['HS256'])
         if not decoded_payload:
-            return Response(data={'error': 'Authorization header missing'}, status=status.HTTP_401_UNAUTHORIZED)
+            response={
+            'error': 'Authorization header missing'
+            }
+            return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         email = decoded_payload.get('email')
         user=User.objects.filter(email=email).first()
         serializer = User_serializers(user)
