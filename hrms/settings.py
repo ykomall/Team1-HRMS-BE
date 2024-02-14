@@ -42,7 +42,7 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     'http://localhost:4200',
 ]
 CORS_ORIGIN_ALLOW_ALL = True
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -126,13 +126,12 @@ CORS_ALLOW_HEADERS = [
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'hrms',
+        'NAME': 'HRMSDB',
         'USER':'postgres',
-        'PASSWORD': os.environ.get("DB_pass"),
-        'HOST' : 'localhost',
+        'PASSWORD':'mirage1303',
+        'HOST' : 'hrmsdb.crq8cok0st5g.ap-south-1.rds.amazonaws.com',
         'PORT' : '5432'
-    }
-}
+    }}
 
 
 # Password validation
