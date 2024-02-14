@@ -29,7 +29,7 @@ logger.addHandler(file_handler)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
-
+SECRET_KEY = 'django-insecure-nhg&r3cwdsytm1rah&&y7k4)a87e@v_u2e*kprr(lb@c8@ba=o'
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
