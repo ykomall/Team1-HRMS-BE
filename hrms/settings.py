@@ -12,16 +12,16 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 import datetime
 from pathlib import Path
-
+from dotenv import load_dotenv
+import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+load_dotenv()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-nhg&r3cwdsytm1rah&&y7k4)a87e@v_u2e*kprr(lb@c8@ba=o'
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -119,7 +119,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'hrms',
         'USER':'postgres',
-        'PASSWORD':'Indore@2008',
+        'PASSWORD': os.environ.get("DB_pass"),
         'HOST' : 'localhost',
         'PORT' : '5432'
     }
