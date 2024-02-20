@@ -30,7 +30,9 @@ class UserLoginView(APIView):
         if user.email==email and pbkdf2_sha256.verify(password, user.password):
             refresh = RefreshToken.for_user(user)
 
-            access_token = jwt.encode( { 'email' : user.email }, '94CEDBC4AC5F94D4496E44691487A', algorithm='HS256')
+
+            access_token = jwt.encode( { 'email' : user.email },"94CEDBC4AC5F94D4496E44691487A", algorithm='HS256')
+
             serializer = User_serializers(user)
             manager=False
             if user.role=="Manager":
@@ -66,7 +68,9 @@ class Leave(APIView):
             }
             return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         # # Get Authorization token from headers
-        decoded_payload = jwt.decode(authorization_token, '94CEDBC4AC5F94D4496E44691487A', algorithms=['HS256'])
+
+        decoded_payload = jwt.decode(authorization_token,"94CEDBC4AC5F94D4496E44691487A", algorithms=['HS256'])
+
         if not decoded_payload:
             response={
                 'error': 'Authorization header missing'
@@ -152,7 +156,9 @@ class ManagerGet(APIView):
             'success': False
             }
             return Response(response, status=status.HTTP_401_UNAUTHORIZED)
-        decoded_payload = jwt.decode(authorization_token, '94CEDBC4AC5F94D4496E44691487A', algorithms=['HS256'])
+
+        decoded_payload = jwt.decode(authorization_token, "94CEDBC4AC5F94D4496E44691487A", algorithms=['HS256'])
+
 
         if not decoded_payload:
             response={
@@ -195,7 +201,9 @@ class GrantLeave(APIView):
             'success': False
             }
             return Response(response, status=status.HTTP_401_UNAUTHORIZED)
-        decoded_payload = jwt.decode(authorization_token, '94CEDBC4AC5F94D4496E44691487A', algorithms=['HS256'])
+
+        decoded_payload = jwt.decode(authorization_token,"94CEDBC4AC5F94D4496E44691487A", algorithms=['HS256'])
+
 
         if not decoded_payload:
             response={
@@ -267,7 +275,9 @@ class NewUser(APIView):
             'success': False
             }
             return Response(response, status=status.HTTP_401_UNAUTHORIZED)
-        decoded_payload = jwt.decode(authorization_token, '94CEDBC4AC5F94D4496E44691487A', algorithms=['HS256'])
+
+        decoded_payload = jwt.decode(authorization_token, "94CEDBC4AC5F94D4496E44691487A", algorithms=['HS256'])
+
 
         if not decoded_payload:
             response = {
@@ -355,7 +365,9 @@ class LeaveBalance(APIView):
             'success': False
             }
             return Response(response, status=status.HTTP_401_UNAUTHORIZED)
-        decoded_payload = jwt.decode(authorization_token, '94CEDBC4AC5F94D4496E44691487A', algorithms=['HS256'])
+
+        decoded_payload = jwt.decode(authorization_token,"94CEDBC4AC5F94D4496E44691487A" , algorithms=['HS256'])
+
         if not decoded_payload:
             response = {
             'error': 'Authorization header missing'
@@ -397,7 +409,9 @@ class ProfileCard(APIView):
             }
             return Response(response, status=status.HTTP_401_UNAUTHORIZED)
         
-        decoded_payload = jwt.decode(authorization_token, '94CEDBC4AC5F94D4496E44691487A', algorithms=['HS256'])
+
+        decoded_payload = jwt.decode(authorization_token, "94CEDBC4AC5F94D4496E44691487A" , algorithms=['HS256'])
+
         if not decoded_payload:
             response={
             'error': 'Authorization header missing'
