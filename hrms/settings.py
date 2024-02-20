@@ -30,6 +30,7 @@ logger.addHandler(file_handler)
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
+SECRET_KEY = 'django-insecure-nhg&r3cwdsytm1rah&&y7k4)a87e@v_u2e*kprr(lb@c8@ba=o'
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -42,7 +43,7 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     'http://localhost:4200',
 ]
 CORS_ORIGIN_ALLOW_ALL = True
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -128,8 +129,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'hrms',
         'USER':'postgres',
-        'PASSWORD': os.environ.get("DB_pass"),
-        'HOST' : 'localhost',
+        'PASSWORD': 'mirage1303',
+        'HOST' : 'hrms.crq8cok0st5g.ap-south-1.rds.amazonaws.com',
         'PORT' : '5432'
     }
 }
